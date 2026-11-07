@@ -230,3 +230,57 @@ func TestScanAllDeterministic(t *testing.T) {
 		}
 	}
 }
+
+func TestInspectRepoFetchUpdatesBehind(t *testing.T) {
+	requireGit(t)
+	base := t.TempDir()
+	remote := filepath.Join(base, "remote.git")
+	gitRun(t, base, "init", "--bare", "-b", "main", remote)
+
+	work := filepath.Join(base, "work")
+	gitRun(t, base, "clone", remote, work)
+	commitFile(t, work, "main.go", "one\n")
+	gitRun(t, work, "push", "-u", "origin", "main")
+
+	other := filepath.Join(base, "other")
+	gitRun(t, base, "clone", remote, other)
+	commitFile(t, other, "main.go", "two\n")
+	gitRun(t, other, "push")
+
+	stale := inspectRepo(context.Background(), work, testOptions())
+	if stale.Behind != 0 {
+		t.Fatalf("without -fetch Behind = %d, want 0 (stale local view)", stale.Behind)
+	}
+
+	opts := testOptions()
+	opts.fetch = true
+	fresh := inspectRepo(context.Background(), work, opts)
+	if fresh.Err != nil {
+		t.Fatalf("inspectRepo(fetch) error = %v", fresh.Err)
+	}
+	if fresh.FetchErr != nil {
+		t.Fatalf("FetchErr = %v, want nil", fresh.FetchErr)
+	}
+	if fresh.Behind != 1 {
+		t.Errorf("with -fetch Behind = %d, want 1", fresh.Behind)
+	}
+}
+
+func TestInspectRepoFetchWithoutRemote(t *testing.T) {
+	requireGit(t)
+	dir := initTestRepo(t)
+	commitFile(t, dir, "main.go", "package main\n")
+
+	opts := testOptions()
+	opts.fetch = true
+	st := inspectRepo(context.Background(), dir, opts)
+	if st.Err != nil {
+		t.Fatalf("inspectRepo(fetch) error = %v", st.Err)
+	}
+	if st.FetchErr != nil {
+		t.Errorf("FetchErr = %v, want nil", st.FetchErr)
+	}
+	if !st.NoRemote {
+		t.Error("NoRemote = false, want true")
+	}
+}
