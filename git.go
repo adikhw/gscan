@@ -53,6 +53,54 @@ func runGit(ctx context.Context, dir string, timeout time.Duration, args ...stri
 	return stdout.String(), nil
 }
 
+// inspectRepo gathers everything gscan reports about one repository. It never
+// fetches unless the caller opted in, so the default scan is read-only and
+// offline.
+func inspectRepo(ctx context.Context, path string, opts options) RepoStatus {
+	st := RepoStatus{Path: path}
+
+	var remoteOut string
+	var remoteErr error
+	remoteLoaded := false
+	loadRemotes := func() {
+		if remoteLoaded {
+			return
+		}
+		remoteLoaded = true
+		out, err := runGit(ctx, path, opts.timeout, "remote")
+		remoteOut = strings.TrimSpace(out)
+		remoteErr = err
+	}
+
+	if opts.fetch {
+		loadRemotes()
+		if remoteErr == nil && remoteOut != "" {
+			if _, err := runGit(ctx, path, opts.timeout, "fetch", "--quiet", "--prune", "--all"); err != nil {
+				st.FetchErr = err
+			}
+		}
+	}
+
+	out, err := runGit(ctx, path, opts.timeout, "status", "--porcelain=v1", "--branch")
+	if err != nil {
+		st.Err = err
+		return st
+	}
+
+	parsed := parseStatus(out)
+	parsed.Path = path
+	parsed.FetchErr = st.FetchErr
+	st = parsed
+
+	if !st.HasUpstream && !st.NoCommits {
+		loadRemotes()
+		if remoteErr == nil && remoteOut == "" {
+			st.NoRemote = true
+		}
+	}
+	return st
+}
+
 func gitEnv() []string {
 	overrides := map[string]string{
 		"GIT_OPTIONAL_LOCKS":  "0",
