@@ -35,6 +35,7 @@ Exit codes:
   0  scan completed
   1  runtime failure (missing path, git not installed, ...)
   2  invalid usage
+  130 interrupted (Ctrl+C)
 `
 
 var errHelp = errors.New("help requested")
