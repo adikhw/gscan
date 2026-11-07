@@ -1,24 +1,29 @@
 package main
 
 import (
-	"flag"
+	"errors"
 	"fmt"
+	"io"
 	"os"
-	"runtime"
 )
 
-func run() int {
-	j := flag.Int("j", runtime.NumCPU(), "Number of workers")
-	flag.Parse()
-	args := flag.Args()
-
-	if len(args) > 1 || *j < 1 {
-		fmt.Fprintln(os.Stderr, "usage: gscan [-j N] [folder]")
-		return exitUsage
-	}
-	return exitOK
+func main() {
+	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
 }
 
-func main() {
-	os.Exit(run())
+func run(args []string, stdout, stderr io.Writer) int {
+	opts, err := parseArgs(args)
+	if errors.Is(err, errHelp) {
+		fmt.Fprint(stdout, usageText)
+		return exitOK
+	}
+	if err != nil {
+		fmt.Fprintf(stderr, "gscan: %v\n\n%s", err, usageText)
+		return exitUsage
+	}
+	if opts.showVersion {
+		printVersion(stdout)
+		return exitOK
+	}
+	return exitOK
 }
