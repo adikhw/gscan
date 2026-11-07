@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"sort"
@@ -130,5 +131,12 @@ func TestFindReposSkipsUnreadableDirectory(t *testing.T) {
 	}
 	if len(got) != 1 || got[0] != repo {
 		t.Fatalf("findRepos() = %v, want [%q]", got, repo)
+	}
+}
+
+func TestScanAllEmpty(t *testing.T) {
+	got := scanAll(context.Background(), nil, 4, testOptions())
+	if len(got) != 0 {
+		t.Fatalf("scanAll() = %v, want empty", got)
 	}
 }

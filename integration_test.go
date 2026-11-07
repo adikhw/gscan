@@ -197,3 +197,36 @@ func TestInspectRepoBehindRemote(t *testing.T) {
 		t.Error("NoRemote = true, want false")
 	}
 }
+
+func TestScanAllDeterministic(t *testing.T) {
+	requireGit(t)
+
+	clean := initTestRepo(t)
+	commitFile(t, clean, "main.go", "package main\n")
+
+	dirty := initTestRepo(t)
+	commitFile(t, dirty, "main.go", "package main\n")
+	if err := os.WriteFile(filepath.Join(dirty, "notes.txt"), []byte("todo\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	bare := initTestRepo(t)
+
+	// Deliberately unsorted: scanAll must preserve the caller's order.
+	paths := []string{dirty, bare, clean}
+
+	one := scanAll(context.Background(), paths, 1, testOptions())
+	many := scanAll(context.Background(), paths, 8, testOptions())
+
+	if len(one) != len(many) {
+		t.Fatalf("scanAll lengths differ: %d vs %d", len(one), len(many))
+	}
+	for i := range one {
+		if one[i] != many[i] {
+			t.Errorf("result %d differs: -j 1 = %+v, -j 8 = %+v", i, one[i], many[i])
+		}
+		if one[i].Path != paths[i] {
+			t.Errorf("result %d path = %q, want %q", i, one[i].Path, paths[i])
+		}
+	}
+}
