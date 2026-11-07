@@ -56,6 +56,11 @@ func TestParseArgs(t *testing.T) {
 			args: []string{"-version"},
 			want: options{workers: runtime.NumCPU(), colorMode: colorAuto, timeout: 10 * time.Second, showVersion: true},
 		},
+		{
+			name: "color mode is case insensitive",
+			args: []string{"-color", "ALWAYS"},
+			want: options{workers: runtime.NumCPU(), colorMode: colorAlways, timeout: 10 * time.Second},
+		},
 	}
 
 	for _, tc := range tests {

@@ -89,6 +89,7 @@ func parseArgs(args []string) (options, error) {
 	if opts.timeout <= 0 {
 		return opts, usageError{fmt.Errorf("-timeout must be greater than zero")}
 	}
+	opts.colorMode = strings.ToLower(opts.colorMode)
 	switch opts.colorMode {
 	case colorAuto, colorAlways, colorNever:
 	default:
