@@ -42,7 +42,11 @@ func runGit(ctx context.Context, dir string, timeout time.Duration, args ...stri
 			return "", ctx.Err()
 		}
 		if cmdCtx.Err() == context.DeadlineExceeded {
-			return "", fmt.Errorf("git %s timed out after %s", args[0], timeout)
+			name := "command"
+			if len(args) > 0 {
+				name = args[0]
+			}
+			return "", fmt.Errorf("git %s timed out after %s", name, timeout)
 		}
 		msg := strings.TrimSpace(stderr.String())
 		if msg == "" {

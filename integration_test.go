@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -282,5 +283,28 @@ func TestInspectRepoFetchWithoutRemote(t *testing.T) {
 	}
 	if !st.NoRemote {
 		t.Error("NoRemote = false, want true")
+	}
+}
+
+func TestRunGitTimeout(t *testing.T) {
+	requireGit(t)
+	dir := initTestRepo(t)
+
+	_, err := runGit(context.Background(), dir, time.Nanosecond, "status")
+	if err == nil || !strings.Contains(err.Error(), "timed out") {
+		t.Fatalf("runGit() error = %v, want a timeout error", err)
+	}
+}
+
+func TestRunGitCanceledContext(t *testing.T) {
+	requireGit(t)
+	dir := initTestRepo(t)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	_, err := runGit(ctx, dir, time.Second, "status")
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("runGit() error = %v, want context.Canceled", err)
 	}
 }
