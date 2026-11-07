@@ -1,3 +1,3 @@
-module gscan
+module github.com/adikhw/gscan
 
-go 1.27.3
+go 1.21

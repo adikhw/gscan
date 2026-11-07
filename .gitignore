@@ -32,6 +32,12 @@ go.work.sum
 # .idea/
 # .vscode/
 
+# Local build output
+/gscan
+/dist/
+/gscan.exe
+
 # Etc
 ScannerGIT.md
+.DS_Store
 
