@@ -178,3 +178,16 @@ func TestRunUsageError(t *testing.T) {
 		t.Errorf("stderr = %q, want gscan prefix", stderr.String())
 	}
 }
+
+func TestResolveRootDefaultsToHome(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("HOME", dir)
+
+	got, err := resolveRoot("")
+	if err != nil {
+		t.Fatalf("resolveRoot(\"\") error = %v", err)
+	}
+	if got != dir {
+		t.Errorf("resolveRoot(\"\") = %q, want %q", got, dir)
+	}
+}

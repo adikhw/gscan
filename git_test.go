@@ -1,6 +1,9 @@
 package main
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestParseStatus(t *testing.T) {
 	tests := []struct {
@@ -110,5 +113,36 @@ func TestParseStatusDoesNotSetPathOrRemote(t *testing.T) {
 	}
 	if got.Err != nil {
 		t.Errorf("Err = %v, want nil", got.Err)
+	}
+}
+
+func TestGitEnvOverrides(t *testing.T) {
+	t.Setenv("GIT_OPTIONAL_LOCKS", "1")
+	t.Setenv("GIT_TERMINAL_PROMPT", "1")
+	t.Setenv("LC_ALL", "en_US.UTF-8")
+
+	want := map[string]string{
+		"GIT_OPTIONAL_LOCKS":  "0",
+		"GIT_TERMINAL_PROMPT": "0",
+		"LC_ALL":              "C",
+		"LANG":                "C",
+	}
+
+	env := gitEnv()
+	counts := make(map[string]int)
+	values := make(map[string]string)
+	for _, entry := range env {
+		key, value, _ := strings.Cut(entry, "=")
+		counts[key]++
+		values[key] = value
+	}
+
+	for key, value := range want {
+		if counts[key] != 1 {
+			t.Errorf("%s appears %d times, want 1", key, counts[key])
+		}
+		if values[key] != value {
+			t.Errorf("%s = %q, want %q", key, values[key], value)
+		}
 	}
 }

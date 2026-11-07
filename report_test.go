@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"io"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -266,5 +267,20 @@ func TestPrintReportRuneAlignment(t *testing.T) {
 	secondRunes := utf8.RuneCountInString(lines[1][:second])
 	if firstRunes != secondRunes {
 		t.Errorf("status columns are not aligned: %d vs %d runes\n%s", firstRunes, secondRunes, buf.String())
+	}
+}
+
+func TestIsTerminal(t *testing.T) {
+	if isTerminal(io.Discard) {
+		t.Error("io.Discard should not be a terminal")
+	}
+
+	f, err := os.CreateTemp(t.TempDir(), "file")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	if isTerminal(f) {
+		t.Error("regular file should not be a terminal")
 	}
 }
