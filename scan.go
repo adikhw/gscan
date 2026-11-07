@@ -29,17 +29,21 @@ func findRepos(root string, includeHidden bool) ([]string, error) {
 		}
 
 		name := d.Name()
-		if path != root {
-			if !includeHidden && strings.HasPrefix(name, ".") {
-				return fs.SkipDir
-			}
-			if skipDirs[name] {
-				return fs.SkipDir
-			}
+		if path != root && !includeHidden && strings.HasPrefix(name, ".") {
+			return fs.SkipDir
+		}
+		if path != root && skipDirs[name] {
+			return fs.SkipDir
 		}
 
 		if _, err := os.Stat(filepath.Join(path, ".git")); err == nil {
 			repos = append(repos, path)
+			return fs.SkipDir
+		}
+
+		// A project directory named "target" or "build" is still a repo, but
+		// if it is not, it is almost certainly a build artifact.
+		if path != root && softSkipDirs[name] {
 			return fs.SkipDir
 		}
 		return nil

@@ -91,6 +91,20 @@ func TestFindReposRootIsRepo(t *testing.T) {
 	}
 }
 
+func TestFindReposFindsRepoWithSkippedDirName(t *testing.T) {
+	root := t.TempDir()
+	repo := mkdirs(t, root, "target")
+	mkdirs(t, repo, ".git")
+
+	got, err := findRepos(root, false)
+	if err != nil {
+		t.Fatalf("findRepos() error = %v", err)
+	}
+	if len(got) != 1 || got[0] != repo {
+		t.Fatalf("findRepos() = %v, want [%q]", got, repo)
+	}
+}
+
 func TestFindReposDoesNotFollowSymlinks(t *testing.T) {
 	root := t.TempDir()
 	target := mkdirs(t, root, "repo")

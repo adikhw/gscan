@@ -35,10 +35,6 @@ var skipDirs = map[string]bool{
 	".tox":             true,
 	".mypy_cache":      true,
 	".pytest_cache":    true,
-	"target":           true,
-	"dist":             true,
-	"build":            true,
-	"out":              true,
 	".cache":           true,
 	".cargo":           true,
 	".rustup":          true,
@@ -53,6 +49,15 @@ var skipDirs = map[string]bool{
 	".turbo":           true,
 	".parcel-cache":    true,
 	".svelte-kit":      true,
+}
+
+// softSkipDirs are pruned only when they are not a repository themselves. A
+// project directory literally named "build" or "target" should still be found.
+var softSkipDirs = map[string]bool{
+	"target": true,
+	"dist":   true,
+	"build":  true,
+	"out":    true,
 }
 
 // RepoStatus is the result of inspecting one repository. It deliberately keeps
